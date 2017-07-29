@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-from wxpy import *
-from config import *
+from wxpy       import *
 from wxpy.utils import start_new_thread
+from config     import *
 
 import re
 import time
 import os
 import platform
 import trigger
-
-isSend   = 0
-nextSend = None
+import notice
 
 '''
 使用 cache 来缓存登陆信息，同时使用控制台登陆
@@ -39,11 +37,6 @@ rp_new_member_name = (
 '''
 管理员群及被管理群初始化
 '''
-admin_puids = (
-    'cc7ee5e3',
-	'7fb8f362',
-)
-
 def fresh_groups():
     global groups, admin_group
     # 格式化被管理群 Groups
@@ -53,13 +46,6 @@ def fresh_groups():
         print("查找被管理群出错！请检查被管理群前缀（group_prefix）是否配置正确")
         quit()
 
-'''
-定义需要管理的群
-群的PUID 可以通过 执行 export_puid.py 生成 data 文件，在data 文件中获取
-'''
-group_puids = (
-    '9595f885',
-)
     # 格式化管理员群 Admin_group
     try:
         admin_group = ensure_one(bot.groups(update = True).search(admin_group_name))
@@ -67,40 +53,18 @@ group_puids = (
         print("查找管理员群出错！请检查管理群群名（admin_group_name）是否配置正确")
         print("现将默认设置为只有本帐号为管理员")
         admin_group = None
-# 格式化 Group
-groups = list(map(lambda x: bot.groups().search(puid=x)[0], group_puids))
-# 格式化 Admin
-admins = list(map(lambda x: bot.friends().search(puid=x)[0], admin_puids))
+
 fresh_groups()
 
-# 新人入群的欢迎语
-welcome_text = '''🎉 欢迎 @{} 的加入！
-😃 请关注我们的公众号“贝尔乐早教”，贝尔乐电话：0757-22115439，欧老师：13129130667，朱老师：13392227928 @平姐 @蓝色雨。
-'''
-# 远程踢人命令: 移出 @<需要被移出的人>
-rp_kick = re.compile(r'^(?:移出|移除|踢出|拉黑)\s*@(.+?)(?:\u2005?\s*$)')
-invite_text  = """感谢您的咨询，如长时间没有回复，请加入我们微群咨询【此消息发自贝尔乐机器人】"""
-
-weather_text = """"""
-
-monday_text   = """"""
-
-tueday_text   = """"""
-
-thursday_text = """"""
-
 # 下方为函数定义
-
 def get_time():
     return str(time.strftime("%Y-%m-%d %H:%M:%S"))
+
 '''
 机器人消息提醒设置
 '''
-keyword_of_group = {
-    "bel":"贝尔乐早教-2017年",
-}
-
 alert_level = 30 # DEBUG: 10, INFO: 20, WARNING: 30, ERROR: 40, FATAL: 50
+
 if alert_group:
     try:
         alert_receiver = ensure_one(bot.groups().search(alert_group))
@@ -109,9 +73,9 @@ if alert_group:
         alert_receiver = bot.file_helper
 else:
     alert_receiver = bot.file_helper
+
 logger = get_wechat_logger(alert_receiver, str(alert_level))
 logger.error(str("机器人登陆成功！"+ get_time()))
-
 
 '''
 重启机器人
@@ -120,28 +84,18 @@ def _restart():
     os.execv(sys.executable, [sys.executable] + sys.argv)
 
 '''
-地区群
-
-'''
-city_group = {
-    "佛山":"贝尔乐早教-2017年",
-}
-
-'''
 状态汇报
 '''
 def status():
     status_text = get_time() + " 机器人目前在线,共有好友 【" + str(len(bot.friends())) + "】 群 【 " + str(len(bot.groups())) + "】"
     return status_text
 
-female_group=""
-
 '''
 定时报告进程状态
 '''
 def heartbeat():
     while bot.alive:
-        time.sleep(3600)
+        time.sleep(3600 * 24)
         # noinspection PyBroadException
         try:
             logger.error(status())
@@ -149,6 +103,7 @@ def heartbeat():
             if 1100 <= e.err_code <= 1102:
                 logger.critical('LCBot offline: {}'.format(e))
                 _restart()
+
 
 # 下方为函数定义
 start_new_thread(heartbeat)
@@ -188,9 +143,14 @@ def from_admin(msg):
     """
     if not isinstance(msg, Message):
         raise TypeError('expected Message, got {}'.format(type(msg)))
+
     from_user = msg.member if isinstance(msg.chat, Group) else msg.sender
-    print(admins)
+
     return from_user in admin_group.members if admin_group else from_user == bot.self
+
+
+# 远程踢人命令: 移出 @<需要被移出的人>
+rp_kick = re.compile(r'^(?:移出|移除|踢出|拉黑)\s*@(.+?)(?:\u2005?\s*$)')
 
 '''
 远程踢人命令
@@ -198,6 +158,7 @@ def from_admin(msg):
 def remote_kick(msg):
     if msg.type is TEXT:
         match = rp_kick.search(msg.text)
+
         if match:
             name_to_kick = match.group(1)
 
@@ -207,14 +168,15 @@ def remote_kick(msg):
                 else:
                     return
 
-            member_to_kick = ensure_one(list(filter(
-                lambda x: x.name == name_to_kick, msg.sender.members)))
+            member_to_kick = ensure_one(list(filter(lambda x: x.name == name_to_kick, msg.sender.members)))
+
             if member_to_kick  == bot.self:
                 return '无法移出 @{}'.format(member_to_kick.name)
             if member_to_kick in admin_group.members:
                 return '无法移出 @{}'.format(member_to_kick.name)
 
             logger.error(get_time() + str(" 【"+member_to_kick.name + "】 被 【"+msg.member.name+"】 移出 【" + msg.sender.name+"】"))
+
             try:
                 member_to_kick.set_remark_name("[黑名单]-"+get_time())
             except:
@@ -234,6 +196,14 @@ def remote_kick(msg):
 
             return kick_info
 
+def askForLeave(msg):
+    if msg.text == "请假":
+        return True
+    else:
+        return False
+
+    pass
+
 
 '''
 邀请消息处理
@@ -248,9 +218,6 @@ def get_new_member_name(msg):
         if match:
             return match.group(1)
 
-
-my_group = "贝尔乐早教-2017年"
-
 '''
 定义邀请用户的方法。
 按关键字搜索相应的群，如果存在相应的群，就向用户发起邀请。
@@ -258,8 +225,10 @@ my_group = "贝尔乐早教-2017年"
 def invite(user, keyword):
     from random import randrange
     group = bot.groups().search(keyword_of_group[keyword])
-	print(keyword)
-	print(keyword_of_group[keyword])
+
+    print(keyword)
+    print(keyword_of_group[keyword])
+
     if len(group) > 0:
         for i in range(0, len(group)):
             if user in group[i]:
@@ -281,7 +250,7 @@ def invite(user, keyword):
 
 def invite_always(user):
 	print(user)
-	group = bot.groups().search(my_group)
+	group = bot.groups().search("贝尔乐早教-2017");
 	target_group = ensure_one(group)
 
 	if user in target_group:
@@ -302,11 +271,13 @@ def invite_always(user):
 @bot.register(msg_types=FRIENDS)
 def new_friends(msg):
     user = msg.card.accept()
+
     if msg.text.lower() in keyword_of_group.keys():
         invite(user, msg.text.lower())
     else:
-    	invite_always(user)
-		user.send(invite_text)
+        invite_always(user)
+        user.send(invite_text)
+
 @bot.register(Friend, msg_types=TEXT)
 def exist_friends(msg):
     if msg.sender.name.find("黑名单") != -1:
@@ -314,13 +285,18 @@ def exist_friends(msg):
     else:
         if msg.text.lower() in keyword_of_group.keys():
             invite(msg.sender, msg.text.lower())
-			invite_always(msg.sender)
         else:
+            invite_always(msg.sender)
             return invite_text
 
 # 管理群内的消息处理
 @bot.register(groups, except_self=False)
 def wxpy_group(msg):
+    bLeave = askForLeave(msg)
+
+    if bLeave:
+        return "您的请假信息已收到！"
+
     ret_msg = remote_kick(msg)
     if ret_msg:
         return ret_msg
@@ -331,7 +307,6 @@ def wxpy_group(msg):
         else:
             return "忙着呢，别烦我！";
             pass
-
 
 @bot.register(groups, NOTE)
 def welcome(msg):
@@ -350,6 +325,11 @@ def alert_command(msg):
             fresh_groups()
             return "群信息已更新，现有被管理群 【{}】，管理员 【{}】".format(len(groups), len(admin_group) if admin_group else 1)
 
-trigger.trigger(isSend, nextSend)
+def myNotice():
+    notice.weather();
+    notice.classNotice();
+    pass
+
+trigger.trigger(0, None, {"h":9,"m":30,"s":0}, myNotice)
 
 embed()
