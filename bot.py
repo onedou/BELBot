@@ -196,12 +196,18 @@ def remote_kick(msg):
 
             return kick_info
 
+'''
+自动回复请假
+'''
+askForLeaveWord = re.compile(r'\w*请假\w*')
+
 def askForLeave(msg):
-    if msg.text == "请假":
+    match = askForLeaveWord.search(msg.text)
+
+    if match:
         return True
     else:
         return False
-
     pass
 
 

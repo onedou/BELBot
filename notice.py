@@ -21,7 +21,7 @@ def weather():
 
 	print(text)
 	bot.groups().search('贝尔乐早教-2017年')[0].send(text)
-	bot.groups().search('贝尔乐成长营')[0].send(text)
+	bot.groups().search('贝尔乐成长营')[1].send(text)
 
 def classNotice():
 	monday    = """温馨提示：今天（周一）晚上7:30--8:30，请孩子们准时来上课。"""
@@ -61,5 +61,5 @@ def classNotice():
 		pass
 
 	print(message)
-	bot.groups().search('贝尔乐成长营')[0].send(message)
+	bot.groups().search('贝尔乐成长营')[1].send(message)
 	pass
