@@ -298,6 +298,7 @@ def exist_friends(msg):
 # 管理群内的消息处理
 @bot.register(groups, except_self=False)
 def wxpy_group(msg):
+    print(msg)
     bLeave = askForLeave(msg)
 
     if bLeave:
@@ -331,11 +332,8 @@ def alert_command(msg):
             fresh_groups()
             return "群信息已更新，现有被管理群 【{}】，管理员 【{}】".format(len(groups), len(admin_group) if admin_group else 1)
 
-def myNotice():
-    notice.weather();
-    notice.classNotice();
-    pass
-
-trigger.trigger(0, None, {"h":9,"m":30,"s":0}, myNotice)
+trigger.trigger(1, {"h":9,"m":30,"s":0}, notice.weather)
+trigger.trigger(1, {"h":9,"m":30,"s":0}, notice.classNotice)
+trigger.trigger(1, {"h":17,"m":30,"s":0}, notice.classNotice)
 
 embed()
