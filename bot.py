@@ -199,13 +199,15 @@ def remote_kick(msg):
 '''
 自动回复请假
 '''
-askForLeaveWord = re.compile(r'\w*请假\w*')
+askForLeaveWordA = re.compile(r'\w*请\w*')
+askForLeaveWordB = re.compile(r'\w*假\w*')
 
 def askForLeave(msg):
     if msg.type is TEXT:
-        match = askForLeaveWord.search(msg.text)
+        matchA = askForLeaveWordA.search(msg.text)
+        matchB = askForLeaveWordB.search(msg.text)
 
-        if match:
+        if matchA and matchB:
             return True
         else:
             return False
@@ -336,7 +338,7 @@ def alert_command(msg):
             return "群信息已更新，现有被管理群 【{}】，管理员 【{}】".format(len(groups), len(admin_group) if admin_group else 1)
 
 trigger.trigger(1, {"h":9,"m":30,"s":0}, notice.weather)
-trigger.trigger(1, {"h":9,"m":30,"s":0}, notice.classNotice)
-trigger.trigger(1, {"h":17,"m":30,"s":0}, notice.classNotice)
+trigger.trigger(1, {"h":8,"m":30,"s":0}, notice.classTodayMorningNotice)
+trigger.trigger(1, {"h":21,"m":30,"s":0}, notice.classTomorrowNotice)
 
 embed()
