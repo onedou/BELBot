@@ -202,13 +202,16 @@ def remote_kick(msg):
 askForLeaveWord = re.compile(r'\w*请假\w*')
 
 def askForLeave(msg):
-    match = askForLeaveWord.search(msg.text)
+    if msg.type is TEXT:
+        match = askForLeaveWord.search(msg.text)
 
-    if match:
-        return True
+        if match:
+            return True
+        else:
+            return False
+        pass
     else:
         return False
-    pass
 
 
 '''
