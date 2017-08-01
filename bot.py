@@ -338,7 +338,7 @@ def alert_command(msg):
             return "群信息已更新，现有被管理群 【{}】，管理员 【{}】".format(len(groups), len(admin_group) if admin_group else 1)
 
 trigger.trigger(1, {"h":9,"m":30,"s":0}, notice.weather)
-trigger.trigger(1, {"h":8,"m":30,"s":0}, notice.classTodayMorningNotice)
-trigger.trigger(1, {"h":21,"m":30,"s":0}, notice.classTomorrowNotice)
+#trigger.trigger(1, {"h":8,"m":30,"s":0}, notice.classTodayMorningNotice)
+#trigger.trigger(1, {"h":21,"m":30,"s":0}, notice.classTomorrowNotice)
 
 embed()
