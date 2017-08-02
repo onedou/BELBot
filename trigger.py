@@ -4,10 +4,10 @@ import time
 import request
 import json
 
-def trigger(isSend, setTimeDict, callback):
+def trigger(isSend, setTimeDict, callback, *params):
 	if isSend == 0:
 		if type(callback) == types.FunctionType:
-			callback()
+			callback(*params)
 
 		isSend = 1
 		pass
@@ -39,4 +39,4 @@ def trigger(isSend, setTimeDict, callback):
 
 	isSend = 0
 
-	threading.Timer(remaining, trigger, (isSend, setTimeDict, callback)).start()
+	threading.Timer(remaining, trigger, (isSend, setTimeDict, callback, *params)).start()

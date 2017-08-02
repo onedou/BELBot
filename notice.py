@@ -24,37 +24,65 @@ def weather():
 	bot.groups().search('贝尔乐成长营')[1].send(text)
 	pass
 
-def classNotice(msgDict):
+def classNotice(*params):
+	sequence = params
 	now      = int(time.time())
 	nowArray = time.localtime(now)
+	week     = nowArray.tm_wday
 
-	message = ""
-	week    = nowArray.tm_wday
+	if(sequence == 'tomorrow'):
+		if week == 6:
+			week = 0
+			pass
+		else:
+			week = week + 1
+			pass
 
 	if week == 0:
-		message = msgDict['monday']
+		weekStr  = 'monday'
+		weekDesc = '周一' 
 		pass
 	elif week == 1:
-		message = msgDict['tuesday']
+		weekStr = 'tuesday'
+		weekDesc = '周二' 
 		pass
 	elif week == 2:
-		message = msgDict['wednesday']
+		weekStr = 'wednesday'
+		weekDesc = '周三' 
 		pass
 	elif week == 3:
-		message = msgDict['thursday']
+		weekStr = 'thursday'
+		weekDesc = '周四' 
 		pass
 	elif week == 4:
-		message = msgDict['friday']
+		weekStr = 'friday'
+		weekDesc = '周五' 
 		pass
 	elif week == 5:
-		message = msgDict['saturday']
+		weekStr = 'saturday'
+		weekDesc = '周六' 
 		pass
 	elif week == 6:
-		message = msgDict['sunday']
+		weekStr = 'sunday'
+		weekDesc = '周日' 
 		pass
 
-	print(message)
-	bot.groups().search('贝尔乐成长营')[1].send(message)
+	classNotice = getSetting('class_notice.json')
+
+	if(sequence == 'today'):
+		message = "今天（" + weekDesc + "）" + classNotice[weekStr]
+		pass
+	elif(sequence == 'tomorrow'):
+		message = "明天（" + weekDesc + "）" + classNotice[weekStr]
+		pass
+
+	message = "温馨提示：" + message + "，请孩子们准时来上课。"
+
+	if week == 6:
+		return
+
+	#bot.groups().search('贝尔乐成长营')[1].send(message)
+	bot.groups().search('贝尔乐测试群')[0].send(message)
 	pass
 
 def getSettting(path):
@@ -62,27 +90,9 @@ def getSettting(path):
 	content = setting.read()
 	setting.close()
 
-	return content
-	pass
-
-def classTodayMorningNotice():
-	
-
-	classNotice(msgDict)
-	pass
-
-def classTomorrowNotice():
-	msgDict = {}
-
-	msgDict['monday']    = "温馨提示：明天早上（周二）9:00--11:30是暑期小学生逻辑狗班上课，请孩子们准时来上课。"
-	msgDict['tuesday']   = "温馨提示：明天（周三）晚上7:30--8:30，是小班创意美术课程，请孩子们准时来上课。"
-	msgDict['wednesday'] = "温馨提示：今天（周三）晚上7:30--8:30，请孩子们准时来上课。"
-	msgDict['thursday']  = "温馨提示：今天（周四）晚上7:30--8:30，请孩子们准时来上课。"
-	msgDict['friday']    = "温馨提示：今天（周五）晚上7:30--8:30，请孩子们准时来上课。"
-	msgDict['saturday']  = "祝大家周末愉快！"
-	msgDict['sunday']    = "温馨提示：明天早上（周一）9:00--11:30是暑期小学生逻辑狗班上课，请孩子们准时来上课。"
-
-	classNotice(msgDict)
+	return eval(content)
 	pass
 
 
+def setClassSetting():
+	pass

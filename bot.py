@@ -10,7 +10,7 @@ import time
 import os
 import platform
 import trigger
-import notice
+# import notice
 
 '''
 使用 cache 来缓存登陆信息，同时使用控制台登陆
@@ -215,6 +215,11 @@ def askForLeave(msg):
     else:
         return False
 
+'''
+设置课程提醒
+'''
+classNoticeWorld = re.compile(r'设置课程|周一|课程内容')
+
 
 '''
 邀请消息处理
@@ -272,6 +277,11 @@ def invite_always(user):
 			target_group.add_members(user, use_invitation=True)
 		except:
 			user.send("邀请错误！机器人邀请好友进群已达当日限制。请您明日再试")
+
+
+def set_class_notice():
+
+    pass
 
 # 下方为消息处理
 
@@ -337,8 +347,8 @@ def alert_command(msg):
             fresh_groups()
             return "群信息已更新，现有被管理群 【{}】，管理员 【{}】".format(len(groups), len(admin_group) if admin_group else 1)
 
-trigger.trigger(1, {"h":9,"m":30,"s":0}, notice.weather)
-#trigger.trigger(1, {"h":8,"m":30,"s":0}, notice.classTodayMorningNotice)
-#trigger.trigger(1, {"h":21,"m":30,"s":0}, notice.classTomorrowNotice)
+# trigger.trigger(1, {"h":9,"m":30,"s":0}, notice.weather)
+# trigger.trigger(1, {"h":8,"m":30,"s":0}, notice.classNotice,'today')
+# trigger.trigger(1, {"h":21,"m":30,"s":0}, notice.classNotice,'tomorrow')
 
 embed()
