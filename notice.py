@@ -21,7 +21,7 @@ def weather():
 
 	print(text)
 	bot.groups().search('贝尔乐早教-2017年')[0].send(text)
-	bot.groups().search('贝尔乐成长营')[1].send(text)
+	bot.groups().search('贝尔乐成长营')[0].send(text)
 	pass
 
 def classNotice(*params):
@@ -85,7 +85,7 @@ def classNotice(*params):
 	bot.groups().search('贝尔乐测试群')[0].send(message)
 	pass
 
-def getSettting(path):
+def getSetting(path):
 	setting = open(path,'r')
 	content = setting.read()
 	setting.close()

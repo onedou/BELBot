@@ -347,8 +347,8 @@ def alert_command(msg):
             fresh_groups()
             return "群信息已更新，现有被管理群 【{}】，管理员 【{}】".format(len(groups), len(admin_group) if admin_group else 1)
 
-# trigger.trigger(1, {"h":9,"m":30,"s":0}, notice.weather)
-# trigger.trigger(1, {"h":8,"m":30,"s":0}, notice.classNotice,'today')
-# trigger.trigger(1, {"h":21,"m":30,"s":0}, notice.classNotice,'tomorrow')
+trigger.trigger(1, {"h":9,"m":30,"s":0},  notice.weather)
+trigger.trigger(1, {"h":8,"m":30,"s":0},  notice.classNotice, 'today')
+trigger.trigger(1, {"h":21,"m":30,"s":0}, notice.classNotice, 'tomorrow')
 
 embed()
