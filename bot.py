@@ -10,7 +10,7 @@ import time
 import os
 import platform
 import trigger
-# import notice
+import notice
 
 '''
 使用 cache 来缓存登陆信息，同时使用控制台登陆
