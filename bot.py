@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # coding: utf-8
-
-from wxpy       import *
+from wxpy import *
 from wxpy.utils import start_new_thread
-from config     import *
+from config import *
 
+import itchat
 import re
 import time
 import os
@@ -16,7 +16,7 @@ import notice
 使用 cache 来缓存登陆信息，同时使用控制台登陆
 '''
 console_qr = (False if platform.system() == 'Windows' else True)
-bot        = Bot('bot.pkl', console_qr=console_qr)
+bot = Bot('bot.pkl', console_qr=console_qr)
 
 bot.messages.max_history = 0
 
@@ -41,14 +41,17 @@ def fresh_groups():
     global groups, admin_group
     # 格式化被管理群 Groups
     try:
-        groups = list(filter(lambda x: x.name.startswith(group_prefix), bot.groups(update = True).search(group_prefix)))
+        groups = list(filter(lambda x: x.name.startswith(
+            group_prefix), bot.groups(update=True).search(group_prefix)))
+        print(groups)
     except:
         print("查找被管理群出错！请检查被管理群前缀（group_prefix）是否配置正确")
         quit()
 
     # 格式化管理员群 Admin_group
     try:
-        admin_group = ensure_one(bot.groups(update = True).search(admin_group_name))
+        admin_group = ensure_one(bot.groups(
+            update=True).search(admin_group_name))
     except:
         print("查找管理员群出错！请检查管理群群名（admin_group_name）是否配置正确")
         print("现将默认设置为只有本帐号为管理员")
@@ -57,28 +60,30 @@ def fresh_groups():
 fresh_groups()
 
 # 下方为函数定义
+
 def get_time():
     return str(time.strftime("%Y-%m-%d %H:%M:%S"))
 
+
 '''
-机器人消息提醒设置
+BEL消息提醒设置
 '''
-alert_level = 30 # DEBUG: 10, INFO: 20, WARNING: 30, ERROR: 40, FATAL: 50
+alert_level = 30  # DEBUG: 10, INFO: 20, WARNING: 30, ERROR: 40, FATAL: 50
 
 if alert_group:
     try:
         alert_receiver = ensure_one(bot.groups().search(alert_group))
     except:
-        print("警报群设置有误，请检查群名是否存在且唯一")
+        # print("警报群设置有误，请检查群名是否存在且唯一")
         alert_receiver = bot.file_helper
 else:
     alert_receiver = bot.file_helper
 
 logger = get_wechat_logger(alert_receiver, str(alert_level))
-logger.error(str("机器人登陆成功！"+ get_time()))
+logger.error(str("BEL COMING！" + get_time()))
 
 '''
-重启机器人
+重启BEL
 '''
 def _restart():
     os.execv(sys.executable, [sys.executable] + sys.argv)
@@ -87,8 +92,9 @@ def _restart():
 状态汇报
 '''
 def status():
-    status_text = get_time() + " 机器人目前在线,共有好友 【" + str(len(bot.friends())) + "】 群 【 " + str(len(bot.groups())) + "】"
+    status_text = get_time() + " BEL目前在线,共有好友 【" + str(len(bot.friends())) + "】 群 【 " + str(len(bot.groups())) + "】"
     return status_text
+
 
 '''
 定时报告进程状态
@@ -101,27 +107,21 @@ def heartbeat():
             logger.error(status())
         except ResponseError as e:
             if 1100 <= e.err_code <= 1102:
-                logger.critical('LCBot offline: {}'.format(e))
+                logger.critical('BELBot offline: {}'.format(e))
                 _restart()
 
+# start_new_thread(heartbeat)
+trigger.trigger(1, {"h":9,"m":30,"s":0},  notice.weather)
 
 # 下方为函数定义
-start_new_thread(heartbeat)
-
 '''
 条件邀请
 '''
 def condition_invite(user):
-    if user.sex == 2:
-        female_groups = bot.groups().search(female_group)[0]
-        try:
-            female_groups.add_members(user, use_invitation=True)
-            pass
-        except:
-            pass
     if (user.province in city_group.keys() or user.city in city_group.keys()):
         try:
-            target_city_group = bot.groups().search(city_group[user.province])[0]
+            target_city_group = bot.groups().search(
+                city_group[user.province])[0]
             pass
         except:
             target_city_group = bot.groups().search(city_group[user.city])[0]
@@ -131,6 +131,7 @@ def condition_invite(user):
                 target_city_group.add_members(user, use_invitation=True)
         except:
             pass
+
 
 '''
 判断消息发送者是否在管理员列表
@@ -168,9 +169,10 @@ def remote_kick(msg):
                 else:
                     return
 
-            member_to_kick = ensure_one(list(filter(lambda x: x.name == name_to_kick, msg.sender.members)))
+            member_to_kick = ensure_one(
+                list(filter(lambda x: x.name == name_to_kick, msg.sender.members)))
 
-            if member_to_kick  == bot.self:
+            if member_to_kick == bot.self:
                 return '无法移出 @{}'.format(member_to_kick.name)
             if member_to_kick in admin_group.members:
                 return '无法移出 @{}'.format(member_to_kick.name)
@@ -188,32 +190,32 @@ def remote_kick(msg):
             else:
                 kick_info = '@{} 已不在群中'.format(member_to_kick.name)
 
-            for ready_to_kick_group in  groups:
+            for ready_to_kick_group in groups:
                 if member_to_kick in ready_to_kick_group:
                     ready_to_kick_group.remove_members(member_to_kick)
                     ready_to_kick_group.send(str("【" + member_to_kick.name + "】 因其在 【" + msg.sender.name + "】 的行为被系统自动移出"))
-                    logger.error(get_time()+ str("【"+member_to_kick.name + "】 被系统自动移出 " +  ready_to_kick_group.name))
+                    logger.error(get_time() + str("【"+member_to_kick.name + "】 被系统自动移出 " + ready_to_kick_group.name))
 
             return kick_info
+
 
 '''
 自动回复请假
 '''
-askForLeaveWordA = re.compile(r'\w*请\w*')
-askForLeaveWordB = re.compile(r'\w*假\w*')
-
 def askForLeave(msg):
-    if msg.type is TEXT:
-        matchA = askForLeaveWordA.search(msg.text)
-        matchB = askForLeaveWordB.search(msg.text)
+    askForLeaveWord = re.compile(r'\w*请假\w*')
 
-        if matchA and matchB:
+    if msg.type is TEXT:
+        match = askForLeaveWord.search(msg.text)
+
+        if match:
             return True
         else:
             return False
         pass
     else:
         return False
+
 
 '''
 设置课程提醒
@@ -234,10 +236,13 @@ def get_new_member_name(msg):
         if match:
             return match.group(1)
 
+
 '''
 定义邀请用户的方法。
 按关键字搜索相应的群，如果存在相应的群，就向用户发起邀请。
 '''
+
+
 def invite(user, keyword):
     from random import randrange
     group = bot.groups().search(keyword_of_group[keyword])
@@ -259,24 +264,24 @@ def invite(user, keyword):
         try:
             target_group.add_members(user, use_invitation=True)
         except:
-            user.send("邀请错误！机器人邀请好友进群已达当日限制。请您明日再试")
+            user.send("邀请错误！BEL邀请好友进群已达当日限制。请您明日再试")
     else:
         user.send("该群状态有误，您换个关键词试试？")
 
 
 def invite_always(user):
-	print(user)
-	group = bot.groups().search("贝尔乐早教-2017");
-	target_group = ensure_one(group)
+    print(user)
+    group = bot.groups().search(group_prefix)
+    target_group = ensure_one(group)
 
-	if user in target_group:
-		content = "您已经加入了 {} [微笑]".format(target_group.nick_name)
-		user.send(content)
-	else:
-		try:
-			target_group.add_members(user, use_invitation=True)
-		except:
-			user.send("邀请错误！机器人邀请好友进群已达当日限制。请您明日再试")
+    if user in target_group:
+        content = "您已经加入了 {} [微笑]".format(target_group.nick_name)
+        user.send(content)
+    else:
+        try:
+            target_group.add_members(user, use_invitation=True)
+        except:
+            user.send("邀请错误！BEL邀请好友进群已达当日限制。请您明日再试")
 
 
 def set_class_notice():
@@ -311,9 +316,12 @@ def exist_friends(msg):
             return invite_text
 
 # 管理群内的消息处理
-@bot.register(groups, except_self=False)
+@bot.register(groups)
 def wxpy_group(msg):
-    print(msg)
+    name = get_new_member_name(msg)
+    if name and not silence_mode:
+        return welcome_text.format(name)
+
     bLeave = askForLeave(msg)
 
     if bLeave:
@@ -323,18 +331,12 @@ def wxpy_group(msg):
     if ret_msg:
         return ret_msg
     elif msg.is_at and not silence_mode:
-        if turing_key :
+        if turing_key:
             tuling = Tuling(api_key=turing_key)
             tuling.do_reply(msg)
         else:
-            return "忙着呢，别烦我！";
-            pass
+            return "忙着呢，别烦我！"    
 
-@bot.register(groups, NOTE)
-def welcome(msg):
-    name = get_new_member_name(msg)
-    if name and not silence_mode:
-        return welcome_text.format(name)
 
 @bot.register(alert_receiver, except_self=False)
 def alert_command(msg):
@@ -346,9 +348,5 @@ def alert_command(msg):
         elif msg.text == "刷新":
             fresh_groups()
             return "群信息已更新，现有被管理群 【{}】，管理员 【{}】".format(len(groups), len(admin_group) if admin_group else 1)
-
-trigger.trigger(1, {"h":9,"m":30,"s":0},  notice.weather)
-trigger.trigger(1, {"h":8,"m":30,"s":0},  notice.classNotice, 'today')
-trigger.trigger(1, {"h":21,"m":30,"s":0}, notice.classNotice, 'tomorrow')
 
 embed()
